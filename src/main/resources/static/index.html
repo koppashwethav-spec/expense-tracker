@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #667eea; min-height: 100vh; }
@@ -18,6 +20,7 @@
         .stat-card.green p { color: #4CAF50; }
         .stat-card.red p { color: #f44336; }
         .stat-card.blue p { color: #2196F3; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
         .main-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
         .form-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); height: fit-content; }
         .form-card h2 { color: #333; margin-bottom: 20px; font-size: 18px; }
@@ -43,6 +46,28 @@
         .edit-btn { background: #ff9800; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; font-size: 12px; }
         .delete-btn { background: #f44336; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
         .user-name { font-weight: bold; }
+        .dark-toggle { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; margin-right: 10px; }
+        /* Dark Mode */
+        body.dark { background: #1a1a2e; }
+        body.dark .form-card, body.dark .table-card, body.dark .stat-card { background: #16213e; color: white; }
+        body.dark .form-card h2, body.dark table, body.dark td { color: white; }
+        body.dark th { background: #0f3460; color: white; }
+        body.dark .form-group input, body.dark .form-group select, body.dark .filter-group input, body.dark .filter-group select { background: #0f3460; color: white; border-color: #444; }
+        body.dark tr:hover { background: #0f3460; }
+        body.dark td { border-bottom-color: #333; }
+        /* Mobile Friendly */
+        @media (max-width: 768px) {
+            .stats { grid-template-columns: 1fr; }
+            .main-grid { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .header { padding: 15px; flex-direction: column; gap: 10px; text-align: center; }
+            .table-header { flex-direction: column; gap: 10px; }
+            .filter-group { flex-direction: column; }
+            .container { padding: 0 10px; }
+            table { font-size: 12px; }
+            th, td { padding: 8px 5px; }
+            .edit-btn, .delete-btn { padding: 3px 8px; font-size: 11px; }
+        }
     </style>
 </head>
 <body>
@@ -51,6 +76,7 @@
     <div class="header">
         <h1>💰 Expense Tracker</h1>
         <div>
+            <button class="dark-toggle" onclick="toggleDark()">🌙 Dark Mode</button>
             <span class="user-name" id="userName">Welcome!</span>
             <button class="logout-btn" onclick="logout()" style="margin-left:15px">
                 <i class="fas fa-sign-out-alt"></i> Logout
@@ -73,6 +99,18 @@
             <div class="stat-card red">
                 <h3>📅 This Month</h3>
                 <p>₹<span id="monthAmount">0</span></p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="form-card">
+                <h2>📊 Spending by Category</h2>
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div class="form-card">
+                <h2>📅 Monthly Spending</h2>
+                <canvas id="monthlyChart"></canvas>
             </div>
         </div>
 
@@ -105,6 +143,11 @@
                     <label>Date</label>
                     <input type="date" id="date">
                 </div>
+                <div class="form-group">
+                    <label>💰 Monthly Budget (₹)</label>
+                    <input type="number" id="budget" placeholder="Set budget limit">
+                    <button onclick="saveBudget()" style="margin-top:8px;width:100%;padding:8px;background:#4CAF50;color:white;border:none;border-radius:8px;cursor:pointer;">Set Budget</button>
+                </div>
                 <button class="save-btn" onclick="saveExpense()">Save Expense</button>
             </div>
 
@@ -124,6 +167,12 @@
                         <input type="text" id="filterSearch" placeholder="🔍 Search..." onkeyup="filterExpenses()">
                     </div>
                 </div>
+
+                <!-- Budget Warning -->
+                <div id="budgetWarning" style="display:none;background:#fff3e0;border-left:4px solid #ff9800;padding:10px;margin-bottom:15px;border-radius:4px;">
+                    ⚠️ <span id="budgetMessage"></span>
+                </div>
+
                 <table>
                     <thead>
                         <tr>
@@ -149,6 +198,47 @@
         const userName = localStorage.getItem('userName');
         if (userName) document.getElementById('userName').innerText = `Hi, ${userName}!`;
 
+        // Dark Mode
+        function toggleDark() {
+            document.body.classList.toggle('dark');
+            const btn = document.querySelector('.dark-toggle');
+            btn.innerText = document.body.classList.contains('dark') ? '☀️ Light Mode' : '🌙 Dark Mode';
+            localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+        }
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark');
+            document.querySelector('.dark-toggle').innerText = '☀️ Light Mode';
+        }
+
+        // Budget
+        function saveBudget() {
+            const budget = document.getElementById('budget').value;
+            if (budget) {
+                localStorage.setItem('budget', budget);
+                alert('Budget set to ₹' + budget + '!');
+            }
+        }
+
+        function checkBudget(total) {
+            const budget = localStorage.getItem('budget');
+            if (budget) {
+                document.getElementById('budget').value = budget;
+                const warning = document.getElementById('budgetWarning');
+                const message = document.getElementById('budgetMessage');
+                if (total >= budget) {
+                    warning.style.display = 'block';
+                    warning.style.borderColor = '#f44336';
+                    warning.style.background = '#ffebee';
+                    message.innerText = `🚨 Budget exceeded! Spent ₹${total} of ₹${budget} budget!`;
+                } else if (total >= budget * 0.8) {
+                    warning.style.display = 'block';
+                    message.innerText = `⚠️ Warning! Spent ₹${total} of ₹${budget} budget (${Math.round(total/budget*100)}%)`;
+                } else {
+                    warning.style.display = 'none';
+                }
+            }
+        }
+
         // Logout
         function logout() {
             localStorage.clear();
@@ -163,6 +253,8 @@
                     allExpenses = data;
                     displayExpenses(data);
                     updateStats(data);
+                    renderCategoryChart(data);
+                    renderMonthlyChart(data);
                 });
         }
 
@@ -170,7 +262,7 @@
         function displayExpenses(data) {
             const list = document.getElementById('expenseList');
             list.innerHTML = '';
-            if(data.length === 0) {
+            if (data.length === 0) {
                 list.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:30px">No expenses found!</td></tr>';
                 return;
             }
@@ -194,12 +286,12 @@
             const total = data.reduce((sum, e) => sum + e.amount, 0);
             document.getElementById('totalAmount').innerText = total.toFixed(2);
             document.getElementById('totalCount').innerText = data.length;
-
             const thisMonth = new Date().getMonth();
             const monthTotal = data
                 .filter(e => new Date(e.date).getMonth() === thisMonth)
                 .reduce((sum, e) => sum + e.amount, 0);
             document.getElementById('monthAmount').innerText = monthTotal.toFixed(2);
+            checkBudget(total);
         }
 
         // Filter
@@ -242,7 +334,7 @@
 
         // Delete
         function deleteExpense(id) {
-            if(confirm('Delete this expense?')) {
+            if (confirm('Delete this expense?')) {
                 fetch(`${API}/${id}`, { method: 'DELETE' })
                     .then(() => loadExpenses());
             }
@@ -255,6 +347,50 @@
             document.getElementById('description').value = '';
             document.getElementById('date').value = '';
             document.getElementById('formTitle').innerText = '➕ Add Expense';
+        }
+
+        // Category Chart
+        function renderCategoryChart(data) {
+            const categories = {};
+            data.forEach(e => {
+                categories[e.category] = (categories[e.category] || 0) + e.amount;
+            });
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            if (window.categoryChartInstance) window.categoryChartInstance.destroy();
+            window.categoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{
+                        data: Object.values(categories),
+                        backgroundColor: ['#ff9800', '#2196F3', '#e91e63', '#9c27b0', '#4CAF50']
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        // Monthly Chart
+        function renderMonthlyChart(data) {
+            const months = {};
+            data.forEach(e => {
+                const month = new Date(e.date).toLocaleString('default', { month: 'short' });
+                months[month] = (months[month] || 0) + e.amount;
+            });
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            if (window.monthlyChartInstance) window.monthlyChartInstance.destroy();
+            window.monthlyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(months),
+                    datasets: [{
+                        label: 'Amount (₹)',
+                        data: Object.values(months),
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: { responsive: true }
+            });
         }
 
         loadExpenses();
