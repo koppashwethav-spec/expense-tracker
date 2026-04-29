@@ -3,96 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <title>Expense Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: Arial; max-width: 800px; margin: 40px auto; padding: 20px; background: #f4f4f4; }
-        h1 { color: #333; text-align: center; }
-        .form-box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        input, select { width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; }
-        button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
-        button:hover { background: #45a049; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #4CAF50; color: white; }
-        .delete-btn { background: red; padding: 5px 10px; width: auto; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #667eea; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; }
+        .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; }
+        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .stat-card h3 { color: #666; font-size: 14px; margin-bottom: 10px; }
+        .stat-card p { font-size: 28px; font-weight: bold; color: #333; }
+        .stat-card.green p { color: #4CAF50; }
+        .stat-card.red p { color: #f44336; }
+        .stat-card.blue p { color: #2196F3; }
+        .main-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .form-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); height: fit-content; }
+        .form-card h2 { color: #333; margin-bottom: 20px; font-size: 18px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; color: #666; font-size: 13px; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #eee; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus { border-color: #667eea; outline: none; }
+        .save-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .table-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .filter-group { display: flex; gap: 10px; }
+        .filter-group input, .filter-group select { padding: 8px 12px; border: 2px solid #eee; border-radius: 8px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; color: #666; font-size: 13px; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        tr:hover { background: #f8f9fa; }
+        .category-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .Food { background: #fff3e0; color: #ff9800; }
+        .Travel { background: #e3f2fd; color: #2196F3; }
+        .Shopping { background: #fce4ec; color: #e91e63; }
+        .Bills { background: #f3e5f5; color: #9c27b0; }
+        .Other { background: #e8f5e9; color: #4CAF50; }
+        .edit-btn { background: #ff9800; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; font-size: 12px; }
+        .delete-btn { background: #f44336; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .user-name { font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>💰 Expense Tracker</h1>
-
-    <!-- Add Expense Form -->
-    <div class="form-box">
-        <h2>Add Expense</h2>
-        <input type="text" id="category" placeholder="Category (Food, Travel, etc.)">
-        <input type="number" id="amount" placeholder="Amount (₹)">
-        <input type="text" id="description" placeholder="Description">
-        <input type="date" id="date">
-        <button onclick="addExpense()">Add Expense</button>
+    <!-- Header -->
+    <div class="header">
+        <h1>💰 Expense Tracker</h1>
+        <div>
+            <span class="user-name" id="userName">Welcome!</span>
+            <button class="logout-btn" onclick="logout()" style="margin-left:15px">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
     </div>
 
-    <!-- Expense List -->
-    <h2>All Expenses</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Category</th>
-                <th>Amount</th>
-                <th>Description</th>
-                <th>Date</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="expenseList"></tbody>
-    </table>
+    <div class="container">
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card green">
+                <h3>💰 Total Spent</h3>
+                <p>₹<span id="totalAmount">0</span></p>
+            </div>
+            <div class="stat-card blue">
+                <h3>📋 Total Expenses</h3>
+                <p><span id="totalCount">0</span></p>
+            </div>
+            <div class="stat-card red">
+                <h3>📅 This Month</h3>
+                <p>₹<span id="monthAmount">0</span></p>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+
+            <!-- Add/Edit Form -->
+            <div class="form-card">
+                <h2 id="formTitle">➕ Add Expense</h2>
+                <input type="hidden" id="expenseId">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category">
+                        <option value="Food">🍔 Food</option>
+                        <option value="Travel">✈️ Travel</option>
+                        <option value="Shopping">🛍️ Shopping</option>
+                        <option value="Bills">💡 Bills</option>
+                        <option value="Other">📦 Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount (₹)</label>
+                    <input type="number" id="amount" placeholder="Enter amount">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="description" placeholder="What did you spend on?">
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="date">
+                </div>
+                <button class="save-btn" onclick="saveExpense()">Save Expense</button>
+            </div>
+
+            <!-- Expense Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h2>📋 All Expenses</h2>
+                    <div class="filter-group">
+                        <select id="filterCategory" onchange="filterExpenses()">
+                            <option value="">All Categories</option>
+                            <option value="Food">Food</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Bills">Bills</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <input type="text" id="filterSearch" placeholder="🔍 Search..." onkeyup="filterExpenses()">
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseList"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
 
     <script>
         const API = 'http://localhost:8081/api/expenses';
+        let allExpenses = [];
 
-        // Load all expenses
+        // Show username
+        const userName = localStorage.getItem('userName');
+        if (userName) document.getElementById('userName').innerText = `Hi, ${userName}!`;
+
+        // Logout
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // Load expenses
         function loadExpenses() {
             fetch(API)
                 .then(res => res.json())
                 .then(data => {
-                    const list = document.getElementById('expenseList');
-                    list.innerHTML = '';
-                    data.forEach(exp => {
-                        list.innerHTML += `
-                            <tr>
-                                <td>${exp.category}</td>
-                                <td>₹${exp.amount}</td>
-                                <td>${exp.description}</td>
-                                <td>${exp.date}</td>
-                                <td><button class="delete-btn" onclick="deleteExpense(${exp.id})">Delete</button></td>
-                            </tr>`;
-                    });
+                    allExpenses = data;
+                    displayExpenses(data);
+                    updateStats(data);
                 });
         }
 
-        // Add expense
-        function addExpense() {
+        // Display expenses
+        function displayExpenses(data) {
+            const list = document.getElementById('expenseList');
+            list.innerHTML = '';
+            if(data.length === 0) {
+                list.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:30px">No expenses found!</td></tr>';
+                return;
+            }
+            data.forEach(exp => {
+                list.innerHTML += `
+                    <tr>
+                        <td><span class="category-badge ${exp.category}">${exp.category}</span></td>
+                        <td><strong>₹${exp.amount}</strong></td>
+                        <td>${exp.description}</td>
+                        <td>${exp.date}</td>
+                        <td>
+                            <button class="edit-btn" onclick="editExpense(${exp.id},'${exp.category}',${exp.amount},'${exp.description}','${exp.date}')">✏️ Edit</button>
+                            <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑️ Delete</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        // Update stats
+        function updateStats(data) {
+            const total = data.reduce((sum, e) => sum + e.amount, 0);
+            document.getElementById('totalAmount').innerText = total.toFixed(2);
+            document.getElementById('totalCount').innerText = data.length;
+
+            const thisMonth = new Date().getMonth();
+            const monthTotal = data
+                .filter(e => new Date(e.date).getMonth() === thisMonth)
+                .reduce((sum, e) => sum + e.amount, 0);
+            document.getElementById('monthAmount').innerText = monthTotal.toFixed(2);
+        }
+
+        // Filter
+        function filterExpenses() {
+            const category = document.getElementById('filterCategory').value;
+            const search = document.getElementById('filterSearch').value.toLowerCase();
+            let filtered = allExpenses;
+            if (category) filtered = filtered.filter(e => e.category === category);
+            if (search) filtered = filtered.filter(e => e.description.toLowerCase().includes(search));
+            displayExpenses(filtered);
+        }
+
+        // Save expense
+        function saveExpense() {
+            const id = document.getElementById('expenseId').value;
             const expense = {
                 category: document.getElementById('category').value,
                 amount: document.getElementById('amount').value,
                 description: document.getElementById('description').value,
                 date: document.getElementById('date').value
             };
-
-            fetch(API, {
-                method: 'POST',
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${API}/${id}` : API;
+            fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(expense)
-            }).then(() => {
-                loadExpenses();
-            });
+            }).then(() => { clearForm(); loadExpenses(); });
         }
 
-        // Delete expense
+        // Edit
+        function editExpense(id, category, amount, description, date) {
+            document.getElementById('expenseId').value = id;
+            document.getElementById('category').value = category;
+            document.getElementById('amount').value = amount;
+            document.getElementById('description').value = description;
+            document.getElementById('date').value = date;
+            document.getElementById('formTitle').innerText = '✏️ Edit Expense';
+        }
+
+        // Delete
         function deleteExpense(id) {
-            fetch(API + '/' + id, { method: 'DELETE' })
-                .then(() => loadExpenses());
+            if(confirm('Delete this expense?')) {
+                fetch(`${API}/${id}`, { method: 'DELETE' })
+                    .then(() => loadExpenses());
+            }
         }
 
-        // Load on page start
+        // Clear form
+        function clearForm() {
+            document.getElementById('expenseId').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('date').value = '';
+            document.getElementById('formTitle').innerText = '➕ Add Expense';
+        }
+
         loadExpenses();
     </script>
 
