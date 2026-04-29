@@ -6,6 +6,9 @@
     <title>Expense Tracker</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #667eea; min-height: 100vh; }
@@ -30,7 +33,7 @@
         .form-group input:focus, .form-group select:focus { border-color: #667eea; outline: none; }
         .save-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
         .table-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
         .filter-group { display: flex; gap: 10px; }
         .filter-group input, .filter-group select { padding: 8px 12px; border: 2px solid #eee; border-radius: 8px; font-size: 13px; }
         table { width: 100%; border-collapse: collapse; }
@@ -45,6 +48,8 @@
         .Other { background: #e8f5e9; color: #4CAF50; }
         .edit-btn { background: #ff9800; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; font-size: 12px; }
         .delete-btn { background: #f44336; color: white; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .pdf-btn { background: #f44336; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+        .excel-btn { background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; }
         .user-name { font-weight: bold; }
         .dark-toggle { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; margin-right: 10px; }
         /* Dark Mode */
@@ -155,6 +160,10 @@
             <div class="table-card">
                 <div class="table-header">
                     <h2>📋 All Expenses</h2>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="pdf-btn" onclick="exportPDF()">📄 PDF</button>
+                        <button class="excel-btn" onclick="exportExcel()">📊 Excel</button>
+                    </div>
                     <div class="filter-group">
                         <select id="filterCategory" onchange="filterExpenses()">
                             <option value="">All Categories</option>
@@ -347,6 +356,33 @@
             document.getElementById('description').value = '';
             document.getElementById('date').value = '';
             document.getElementById('formTitle').innerText = '➕ Add Expense';
+        }
+
+        // Export PDF
+        function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text('Expense Tracker Report', 14, 15);
+            doc.autoTable({
+                head: [['Category', 'Amount', 'Description', 'Date']],
+                body: allExpenses.map(e => [e.category, '₹' + e.amount, e.description, e.date]),
+                startY: 25
+            });
+            doc.save('expenses.pdf');
+        }
+
+        // Export Excel
+        function exportExcel() {
+            const data = allExpenses.map(e => ({
+                Category: e.category,
+                Amount: e.amount,
+                Description: e.description,
+                Date: e.date
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
+            XLSX.writeFile(wb, 'expenses.xlsx');
         }
 
         // Category Chart
