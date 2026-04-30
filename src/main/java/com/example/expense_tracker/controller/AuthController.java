@@ -1,4 +1,3 @@
-
 package com.example.expense_tracker.controller;
 
 import com.example.expense_tracker.model.User;
@@ -41,6 +40,22 @@ public class AuthController {
             response.put("name", found.get().getName());
         } else {
             response.put("message", "Invalid email or password!");
+        }
+        return response;
+    }
+
+    // Reset Password
+    @PostMapping("/reset-password")
+    public Map<String, String> resetPassword(@RequestBody User user) {
+        Map<String, String> response = new HashMap<>();
+        Optional<User> found = userRepository.findByEmail(user.getEmail());
+        if (found.isPresent()) {
+            User existingUser = found.get();
+            existingUser.setPassword(user.getPassword());
+            userRepository.save(existingUser);
+            response.put("message", "Password reset successful!");
+        } else {
+            response.put("message", "Email not found!");
         }
         return response;
     }
