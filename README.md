@@ -58,7 +58,7 @@ expense-tracker/
 
 4. Open your browser and navigate to:
    ```
-   http://localhost:8080
+   http://localhost:8081
    ```
 
 ## Usage
