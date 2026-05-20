@@ -53,7 +53,7 @@ expense-tracker/
 
 3. Run the application:
    ```bash
-   mvn spring-boot:run
+   .\mvn spring-boot:run
    ```
 
 4. Open your browser and navigate to:
